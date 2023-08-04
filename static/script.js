@@ -1,6 +1,8 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
 
 const TEXT_BYTE_LIMIT = 300
+const CHUNK_BYTE_LIMIT = 290
+
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
@@ -18,7 +20,7 @@ window.onload = () => {
             console.error(`${resp.data.meta.dc} (age ${resp.data.meta.age} minutes) is unable to provide service`)
             setError(
                 `Service not available${resp.data.message && resp.data.message.length > 1 ? ` (<b>"${resp.data.message}"</b>)` : ''}, try again later or check the <a href='https://github.com/Weilbyte/tiktok-tts'>GitHub</a> repository for more info`
-                )
+            )
         }
     } else {
         setError('Error querying API status, try again later or check the <a href=\'https://github.com/Weilbyte/tiktok-tts\'>GitHub</a> repository for more info')
@@ -86,40 +88,73 @@ const submitForm = () => {
     if (textLength === 0) text = 'The fungus among us.' 
     const voice = document.getElementById('voice').value
 
-    if(voice == "none") {
+    if (voice == "none") {
         setError("No voice has been selected");
         enableControls()
         return
     }
 
     if (textLength > TEXT_BYTE_LIMIT) {
-        setError(`Text must not be over ${TEXT_BYTE_LIMIT} UTF-8 characters (currently at ${textLength})`)
-        enableControls()
-        return
+        processLongText(text, voice);
+    } else {
+        generateAudio(text, voice);
+    }
+}
+
+const processLongText = (text, voice) => {
+    const chunks = [];
+    let currentIndex = 0;
+
+    while (currentIndex < text.length) {
+        const chunk = text.slice(currentIndex, currentIndex + CHUNK_BYTE_LIMIT);
+        chunks.push(chunk);
+        currentIndex += CHUNK_BYTE_LIMIT;
     }
 
+    const audioData = [];
+
+    const processNextChunk = (index) => {
+        if (index >= chunks.length) {
+            const mergedAudio = audioData.join('');
+            setAudio(mergedAudio, text);
+            enableControls();
+            return;
+        }
+
+        generateAudio(chunks[index], voice, (base64Audio) => {
+            audioData.push(base64Audio);
+            processNextChunk(index + 1);
+        });
+    };
+
+    processNextChunk(0);
+};
+
+const generateAudio = (text, voice, callback = null) => {
     try {
-        const req = new XMLHttpRequest()
-        req.open('POST', `${ENDPOINT}/api/generation`, false)
-        req.setRequestHeader('Content-Type', 'application/json')
+        const req = new XMLHttpRequest();
+        req.open('POST', `${ENDPOINT}/api/generation`, false);
+        req.setRequestHeader('Content-Type', 'application/json');
         req.send(JSON.stringify({
             text: text,
             voice: voice
-        }))
+        }));
 
-        let resp = JSON.parse(req.responseText)
+        let resp = JSON.parse(req.responseText);
         if (resp.data === null) {
-            setError(`<b>Generation failed</b><br/> ("${resp.error}")`)
+            setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
         } else {
-            setAudio(resp.data, text)
+            if (callback) {
+                callback(resp.data);
+            } else {
+                setAudio(resp.data, text);
+            }
         }  
     } catch {
-        setError('Error submitting form (printed to F12 console)')
-        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)')
-        console.log('If the error code is 503, the service is currently unavailable. Please try again later.')
-        console.log(`Voice: ${voice}`)
-        console.log(`Text: ${text}`)
+        setError('Error submitting form (printed to F12 console)');
+        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
+        console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
+        console.log(`Voice: ${voice}`);
+        console.log(`Text: ${text}`);
     }
-
-    enableControls()
-}
+};
