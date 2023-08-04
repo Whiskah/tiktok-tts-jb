@@ -82,13 +82,16 @@ const submitForm = () => {
     disableControls()
 
     let text = document.getElementById('text').value
+    // Remove excessive line breaks from the text
+    text = text.replace(/[\r\n]{3,}/g, '\n\n');
+
     const textLength = new TextEncoder().encode(text).length
     console.log(textLength)
 
     if (textLength === 0) text = 'The fungus among us.' 
     const voice = document.getElementById('voice').value
 
-    if (voice == "none") {
+    if(voice == "none") {
         setError("No voice has been selected");
         enableControls()
         return
