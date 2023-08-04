@@ -87,6 +87,33 @@ const submitForm = () => {
     // Replace smart quotes with regular quotes
     text = text.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
 
+    // Split the text into words
+    const words = text.split(' ');
+
+    // Create an array to store the chunks of text
+    const textChunks = [];
+    let currentChunk = '';
+
+    for (const word of words) {
+        // Check if adding the current word will exceed the byte limit
+        const nextChunk = `${currentChunk}${currentChunk ? ' ' : ''}${word}`;
+        const nextChunkLength = new TextEncoder().encode(nextChunk).length;
+        
+        if (nextChunkLength <= TEXT_BYTE_LIMIT) {
+            // Add the word to the current chunk if it doesn't exceed the limit
+            currentChunk = nextChunk;
+        } else {
+            // Add the current chunk to the list and start a new chunk with the current word
+            textChunks.push(currentChunk);
+            currentChunk = word;
+        }
+    }
+
+    // Add the last chunk to the list
+    if (currentChunk) {
+        textChunks.push(currentChunk);
+    }
+
     const textLength = new TextEncoder().encode(text).length
     console.log(textLength)
 
