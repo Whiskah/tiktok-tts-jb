@@ -29,6 +29,12 @@
         </h1>
         <p class="text-center pt-6">Generate the <span id="funny">funny</span> TikTok lady voice <sup>(& more)</sup> in your browser</p>
     </div>
+		<!-- Loading popup -->
+	<div id="loading" class="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-50 flex justify-center items-center" style="display: none;">
+		<div class="bg-white p-6 rounded shadow-lg">
+			<p class="text-center">Generating audio...</p>
+		</div>
+	</div>
     <div class="bg-slate-200 md:mt-11 p-11 md:mx-auto h-2/4 md:w-3/5 md:rounded">
         <form onsubmit="event.preventDefault(); submitForm()">
             <label for="text" hidden>Text to generate into speech</label>
