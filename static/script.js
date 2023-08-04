@@ -81,9 +81,11 @@ const submitForm = () => {
 
     disableControls()
 
-    let text = document.getElementById('text').value
+    let text = document.getElementById('text').value;
     // Remove excessive line breaks from the text
     text = text.replace(/[\r\n]{3,}/g, '\n\n');
+    // Replace smart quotes with regular quotes
+    text = text.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
 
     const textLength = new TextEncoder().encode(text).length
     console.log(textLength)
