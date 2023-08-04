@@ -1,7 +1,7 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
 
-const TEXT_BYTE_LIMIT = 300
-const CHUNK_BYTE_LIMIT = 290
+const TEXT_BYTE_LIMIT = 287
+const CHUNK_BYTE_LIMIT = 277
 
 const textEncoder = new TextEncoder()
 
