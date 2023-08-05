@@ -1,7 +1,7 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
 
 const TEXT_BYTE_LIMIT = 287
-const CHUNK_BYTE_LIMIT = 277
+const CHUNK_BYTE_LIMIT = 32232; // Maximum size per API request chunk
 
 const textEncoder = new TextEncoder()
 
@@ -39,10 +39,25 @@ const clearError = () => {
 }
 
 const setAudio = (base64, text) => {
-    document.getElementById('success').style.display = 'block'
-    document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`
-    document.getElementById('generatedtext').innerHTML = `"${text}"`
-}
+    // Check if the base64 audio is too long for data URI
+    if (base64.length > CHUNK_BYTE_LIMIT) {
+        setError("Audio is too long. Please try a shorter text.");
+        return;
+    }
+
+    document.getElementById('success').style.display = 'block';
+    // Check if the base64 audio is within URL length limit
+    if (base64.length <= 20000) {
+        // Use data URI for short audio files
+        document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`;
+    } else {
+        // Use Blob URL for long audio files
+        const blob = b64toBlob(base64, 'audio/mpeg');
+        const blobUrl = URL.createObjectURL(blob);
+        document.getElementById('audio').src = blobUrl;
+    }
+    document.getElementById('generatedtext').innerHTML = `"${text}"`;
+};
 
 const clearAudio = () => {
     document.getElementById('success').style.display = 'none'
@@ -74,6 +89,23 @@ const onTextareaInput = () => {
         document.getElementById('charcount').style.color = 'black'
     }
 }
+
+// Function to convert base64 to Blob
+const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    const blob = new Blob(byteArrays, { type: contentType });
+    return blob;
+};
 
 const submitForm = () => {
     clearError()
