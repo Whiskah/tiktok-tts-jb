@@ -138,6 +138,80 @@ const hideLoadingOverlay = () => {
 }
 
 const submitForm = async () => {
+    clearError();
+    clearAudio();
+    disableControls();
+
+    let text = document.getElementById('text').value;
+    const textLength = new TextEncoder().encode(text).length;
+
+    if (textLength === 0) text = 'The fungus among us.';
+    const voice = document.getElementById('voice').value;
+
+    if (voice == "none") {
+        setError("No voice has been selected");
+        enableControls();
+        return;
+    }
+
+    if (textLength > TEXT_BYTE_LIMIT) {
+        setError(`Text must not be over ${TEXT_BYTE_LIMIT} UTF-8 characters (currently at ${textLength})`);
+        enableControls();
+        return;
+    }
+
+    try {
+        // Show the loading popup while waiting for the audio response
+        showLoadingPopup();
+
+        // Split the text into chunks of size TEXT_BYTE_LIMIT
+        const textChunks = splitTextIntoChunks(text);
+
+        // Initialize an array to store the audio responses
+        const audioResponses = [];
+
+        for (const chunk of textChunks) {
+            const req = new XMLHttpRequest();
+            req.open('POST', `${ENDPOINT}/api/generation`, false);
+            req.setRequestHeader('Content-Type', 'application/json');
+
+            const chunkResponse = await new Promise((resolve, reject) => {
+                req.onreadystatechange = () => {
+                    if (req.readyState === XMLHttpRequest.DONE) {
+                        if (req.status === 200) {
+                            resolve(JSON.parse(req.responseText));
+                        } else {
+                            reject(new Error('Audio request failed'));
+                        }
+                    }
+                };
+
+                req.send(JSON.stringify({
+                    text: chunk,
+                    voice: voice
+                }));
+            });
+
+            audioResponses.push(chunkResponse.data);
+        }
+
+        // Join the audio responses and set the audio
+        const fullAudio = audioResponses.join('');
+        setAudio(fullAudio, text);
+    } catch (error) {
+        setError('Error submitting form (printed to F12 console)');
+        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
+        console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
+        console.log(`Voice: ${voice}`);
+        console.log(`Text: ${text}`);
+    } finally {
+        // Hide the loading popup after the request is complete (success or error)
+        hideLoadingPopup();
+
+        // Enable controls after the request is complete (success or error)
+        enableControls();
+    }
+};
     clearError()
     clearAudio()
 
