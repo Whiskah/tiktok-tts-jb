@@ -1,7 +1,7 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
 
 const TEXT_BYTE_LIMIT = 287
-const CHUNK_BYTE_LIMIT = 32232; // Maximum size per API request chunk
+const CHUNK_BYTE_LIMIT = 999999; // Maximum size per API request chunk
 
 const textEncoder = new TextEncoder()
 
