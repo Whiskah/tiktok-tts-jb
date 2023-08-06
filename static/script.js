@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("1");
+	console.log("2");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -103,21 +103,22 @@ const submitForm = async () => {
     }
   } else {
     try {
-      const req = new XMLHttpRequest();
-      req.open('POST', `${ENDPOINT}/api/generation`, false);
-      req.setRequestHeader('Content-Type', 'application/json');
-      req.send(
-        JSON.stringify({
+      const response = await fetch(`${ENDPOINT}/api/generation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           text: text,
           voice: voice,
-        })
-      );
+        }),
+      });
 
-      let resp = JSON.parse(req.responseText);
-      if (resp.data === null) {
-        setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
+      const responseData = await response.json();
+      if (responseData.data === null) {
+        setError(`<b>Generation failed</b><br/> ("${responseData.error}")`);
       } else {
-        setAudio(resp.data, text);
+        setAudio(responseData.data, text);
       }
     } catch {
       setError('Error submitting form. Please try again later.');
@@ -133,21 +134,22 @@ const generateAudioChunks = async (text, voice) => {
 
   for (const chunk of chunks) {
     try {
-      const req = new XMLHttpRequest();
-      req.open('POST', `${ENDPOINT}/api/generation`, false);
-      req.setRequestHeader('Content-Type', 'application/json');
-      req.send(
-        JSON.stringify({
+      const response = await fetch(`${ENDPOINT}/api/generation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           text: chunk,
           voice: voice,
-        })
-      );
+        }),
+      });
 
-      let resp = JSON.parse(req.responseText);
-      if (resp.data === null) {
+      const responseData = await response.json();
+      if (responseData.data === null) {
         throw new Error(`Generation failed for chunk: "${chunk}"`);
       } else {
-        audioResponses.push(resp.data);
+        audioResponses.push(responseData.data);
       }
     } catch (error) {
       throw error;
