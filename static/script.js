@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("3");
+	console.log("4");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -150,7 +150,7 @@ const generateAudioChunks = async (text, voice) => {
       if (responseData.data === null) {
         throw new Error(`Generation failed for chunk: "${chunk}"`);
       } else {
-        audioResponses.push(responseData.data);
+        audioResponses.push(responseData.data); // No need to decode here, push base64 data as it is
       }
     } catch (error) {
       throw error;
@@ -170,9 +170,8 @@ const splitTextIntoChunks = (text, chunkSize) => {
 
 const mergeAudioChunks = async (audioResponses) => {
   try {
-    const audioBuffers = await Promise.all(audioResponses.map(base64ToArrayBuffer));
-    const concatenatedBuffer = concatAudioBuffers(audioBuffers);
-    const blob = new Blob([concatenatedBuffer], { type: 'audio/mpeg' });
+    const concatenatedBase64 = audioResponses.join('');
+    const blob = base64ToBlob(concatenatedBase64, 'audio/mpeg');
     const audioUrl = URL.createObjectURL(blob);
     return audioUrl;
   } catch (error) {
@@ -192,6 +191,18 @@ const base64ToArrayBuffer = (base64) => {
 
     resolve(bytes.buffer);
   });
+};
+
+const base64ToBlob = (base64, type) => {
+  const binaryString = window.atob(base64);
+  const length = binaryString.length;
+  const bytes = new Uint8Array(length);
+
+  for (let i = 0; i < length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: type });
 };
 
 const concatAudioBuffers = (buffers) => {
