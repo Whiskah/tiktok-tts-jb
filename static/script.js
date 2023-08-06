@@ -199,6 +199,7 @@ const processLongText = (text, voice) => {
 const generateAudio = (text, voice, callback = null) => {
     try {
         const req = new XMLHttpRequest();
+		console.log("running generateAudio()");
         req.open('POST', `${ENDPOINT}/api/generation`, false);
         req.setRequestHeader('Content-Type', 'application/json');
         req.send(JSON.stringify({
@@ -207,6 +208,7 @@ const generateAudio = (text, voice, callback = null) => {
         }));
 
         let resp = JSON.parse(req.responseText);
+		console.log("generateAudio() resp:" + resp.data);
         if (resp.data === null) {
             setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
         } else {
