@@ -1,10 +1,12 @@
-const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev';
-const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
+const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
+
+const TEXT_BYTE_LIMIT = 300
+const CHUNK_BYTE_LIMIT = 290
 
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("9");
+	console.log("1");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -19,7 +21,7 @@ window.onload = () => {
             console.error(`${resp.data.meta.dc} (age ${resp.data.meta.age} minutes) is unable to provide service`)
             setError(
                 `Service not available${resp.data.message && resp.data.message.length > 1 ? ` (<b>"${resp.data.message}"</b>)` : ''}, try again later or check the <a href='https://github.com/Weilbyte/tiktok-tts'>GitHub</a> repository for more info`
-                )
+            )
         }
     } else {
         setError('Error querying API status, try again later or check the <a href=\'https://github.com/Weilbyte/tiktok-tts\'>GitHub</a> repository for more info')
@@ -37,12 +39,11 @@ const clearError = () => {
     document.getElementById('errortext').innerHTML = 'There was an error.'
 }
 
-const setAudio = async (base64, text) => {
-  document.getElementById('success').style.display = 'block';
-  const audioUrl = await mergeAudioChunks([base64]); // Pass the base64 audio as an array of one element
-  document.getElementById('audio').src = audioUrl;
-  document.getElementById('generatedtext').innerHTML = `"${text}"`;
-};
+const setAudio = (base64, text) => {
+    document.getElementById('success').style.display = 'block'
+    document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`
+    document.getElementById('generatedtext').innerHTML = `"${text}"`
+}
 
 const clearAudio = () => {
     document.getElementById('success').style.display = 'none'
@@ -75,159 +76,86 @@ const onTextareaInput = () => {
     }
 }
 
-const splitTextIntoChunks = (text, chunkSize) => {
-  const chunks = [];
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.slice(i, i + chunkSize));
-  }
-  return chunks;
-};
-const base64ToArrayBuffer = (base64) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const binaryString = window.atob(base64);
-      const length = binaryString.length;
-      const bytes = new Uint8Array(length);
+const submitForm = () => {
+    clearError()
+    clearAudio()
 
-      for (let i = 0; i < length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+    disableControls()
 
-      resolve(bytes.buffer);
-    } catch (error) {
-      reject(error);
+    let text = document.getElementById('text').value
+    const textLength = new TextEncoder().encode(text).length
+    console.log(textLength)
+
+    if (textLength === 0) text = 'The fungus among us.' 
+    const voice = document.getElementById('voice').value
+
+    if (voice == "none") {
+        setError("No voice has been selected");
+        enableControls()
+        return
     }
-  });
-};
 
-const base64ToBlob = (base64) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const binaryString = window.atob(base64);
-      const length = binaryString.length;
-      const bytes = new Uint8Array(length);
-
-      for (let i = 0; i < length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      resolve(new Blob([bytes], { type: 'audio/mpeg' }));
-    } catch (error) {
-      reject(error);
+    if (textLength > TEXT_BYTE_LIMIT) {
+        processLongText(text, voice);
+    } else {
+        generateAudio(text, voice);
     }
-  });
-};
+}
 
-const concatAudioBuffers = (buffers) => {
-  const totalLength = buffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
+const processLongText = (text, voice) => {
+    const chunks = [];
+    let currentIndex = 0;
 
-  buffers.forEach((buffer) => {
-    result.set(new Uint8Array(buffer), offset);
-    offset += buffer.byteLength;
-  });
-
-  return result;
-};
-
-
-const generateAudioChunks = async (text, voice) => {
-  const chunks = splitTextIntoChunks(text, TEXT_BYTE_LIMIT);
-  const audioResponses = [];
-
-  for (const chunk of chunks) {
-    try {
-      const response = await fetch(`${ENDPOINT}/api/generation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: chunk,
-          voice: voice,
-        }),
-      });
-
-      const responseData = await response.text(); // Get the plain text response
-      console.log('API Response Data (Plain Text):', responseData); // Add this line for debugging
-
-      if (responseData === null) {
-        throw new Error(`Generation failed for chunk: "${chunk}"`);
-      } else {
-        audioResponses.push(responseData); // Push the plain text base64 audio data
-      }
-    } catch (error) {
-      throw error;
+    while (currentIndex < text.length) {
+        const chunk = text.slice(currentIndex, currentIndex + CHUNK_BYTE_LIMIT);
+        chunks.push(chunk);
+        currentIndex += CHUNK_BYTE_LIMIT;
     }
-  }
 
-  return audioResponses;
+    const audioData = [];
+
+    const processNextChunk = (index) => {
+        if (index >= chunks.length) {
+            const mergedAudio = audioData.join('');
+            setAudio(mergedAudio, text);
+            enableControls();
+            return;
+        }
+
+        generateAudio(chunks[index], voice, (base64Audio) => {
+            audioData.push(base64Audio);
+            processNextChunk(index + 1);
+        });
+    };
+
+    processNextChunk(0);
 };
 
-
-
-const mergeAudioChunks = async (audioResponses) => {
-  try {
-    const audioChunks = await Promise.all(audioResponses.map(base64ToBlob));
-    const concatenatedBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-    const audioUrl = URL.createObjectURL(concatenatedBlob);
-    return audioUrl;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const submitForm = async () => {
-  clearError();
-  clearAudio();
-
-  disableControls();
-
-  let text = document.getElementById('text').value;
-  const textLength = new TextEncoder().encode(text).length;
-
-  if (textLength === 0) text = 'The fungus among us.';
-  const voice = document.getElementById('voice').value;
-
-  if (voice == 'none') {
-    setError('No voice has been selected');
-    enableControls();
-    return;
-  }
-
-  if (textLength > TEXT_BYTE_LIMIT) {
+const generateAudio = (text, voice, callback = null) => {
     try {
-      const audioResponses = await generateAudioChunks(text, voice);
-      const mergedAudio = mergeAudioChunks(audioResponses);
-      setAudio(mergedAudio, text);
-    } catch (error) {
-      setError('Error generating audio. Please try again later.');
-      console.log('Error:', error);
-    }
-  } else {
-    try {
-      const response = await fetch(`${ENDPOINT}/api/generation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text,
-          voice: voice,
-        }),
-      });
+        const req = new XMLHttpRequest();
+        req.open('POST', `${ENDPOINT}/api/generation`, false);
+        req.setRequestHeader('Content-Type', 'application/json');
+        req.send(JSON.stringify({
+            text: text,
+            voice: voice
+        }));
 
-      const responseData = await response.json();
-      if (responseData.data === null) {
-        setError(`<b>Generation failed</b><br/> ("${responseData.error}")`);
-      } else {
-        setAudio(responseData.data, text);
-      }
+        let resp = JSON.parse(req.responseText);
+        if (resp.data === null) {
+            setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
+        } else {
+            if (callback) {
+                callback(resp.data);
+            } else {
+                setAudio(resp.data, text);
+            }
+        }  
     } catch {
-      setError('Error submitting form. Please try again later.');
+        setError('Error submitting form (printed to F12 console)');
+        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
+        console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
+        console.log(`Voice: ${voice}`);
+        console.log(`Text: ${text}`);
     }
-  }
-
-  enableControls();
 };
