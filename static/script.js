@@ -1,7 +1,7 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev';
 
 const TEXT_CHAR_LIMIT = 287;
-const CHUNK_CHAR_LIMIT = 32232;
+const CHUNK_CHAR_LIMIT = 99999;
 
 const textEncoder = new TextEncoder();
 
