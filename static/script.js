@@ -42,7 +42,7 @@ const clearError = () => {
 const setAudio = (base64, text) => {
     // Check if the base64 audio is too long for data URI
 	console.log("setAudio() base64 length:" + base64.length);
-    if (base64.length > CHUNK_BYTE_LIMIT) {
+    if (base64.length > CHUNK_CHAR_LIMIT) {
 				console.log("setAudio() if length");
         setError("Audio is too long. Please try a shorter text.");
         return;
@@ -176,9 +176,9 @@ const processLongText = (text, voice) => {
     let currentIndex = 0;
 
     while (currentIndex < text.length) {
-        const chunk = text.slice(currentIndex, currentIndex + CHUNK_BYTE_LIMIT);
+        const chunk = text.slice(currentIndex, currentIndex + CHUNK_CHAR_LIMIT);
         chunks.push(chunk);
-        currentIndex += CHUNK_BYTE_LIMIT;
+        currentIndex += CHUNK_CHAR_LIMIT;
     }
 
     const audioData = [];
