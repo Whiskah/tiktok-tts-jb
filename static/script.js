@@ -133,7 +133,7 @@ const submitForm = () => {
         const nextChunk = `${currentChunk}${currentChunk ? ' ' : ''}${word}`;
         const nextChunkLength = new TextEncoder().encode(nextChunk).length;
 
-        if (nextChunkLength <= TEXT_BYTE_LIMIT) {
+        if (nextChunkLength <= TEXT_CHAR_LIMIT) {
             // Add the word to the current chunk if it doesn't exceed the limit
             currentChunk = nextChunk;
         } else {
@@ -160,7 +160,7 @@ const submitForm = () => {
         return;
     }
 
-    if (textLength > TEXT_BYTE_LIMIT) {
+    if (textLength > TEXT_CHAR_LIMIT) {
         processLongText(text, voice);
     } else {
         generateAudio(text, voice);
