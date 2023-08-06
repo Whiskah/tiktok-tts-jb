@@ -8,7 +8,7 @@ const textEncoder = new TextEncoder()
 let countdownInterval; // Global variable to hold the interval ID for the countdown timer
 
 window.onload = () => {
-	console.log("2");
+	console.log("3");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -158,30 +158,32 @@ const processLongText = (text, voice) => {
 };
 
 const generateAudio = (text, voice, callback = null) => {
-    try {
-        const req = new XMLHttpRequest();
-        req.open('POST', `${ENDPOINT}/api/generation`, false);
-        req.setRequestHeader('Content-Type', 'application/json');
-        req.send(JSON.stringify({
-            text: text,
-            voice: voice
-        }));
+  try {
+    const req = new XMLHttpRequest();
+    req.open('POST', `${ENDPOINT}/api/generation`, false);
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.send(JSON.stringify({
+      text: text,
+      voice: voice
+    }));
 
-        let resp = JSON.parse(req.responseText);
-        if (resp.data === null) {
-            setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
-        } else {
-            if (callback) {
-                callback(resp.data);
-            } else {
-                setAudio(resp.data, text);
-            }
-        }  
-    } catch {
-        setError('Error submitting form (printed to F12 console)');
-        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
-        console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
-        console.log(`Voice: ${voice}`);
-        console.log(`Text: ${text}`);
-    }
+    const respText = req.responseText;
+    const respData = JSON.parse(respText);
+    if (respData.data === null) {
+      setError(`<b>Generation failed</b><br/> ("${respData.error}")`);
+    } else {
+      if (callback) {
+        callback(respData.data);
+      } else {
+        setAudio(respData.data, text);
+      }
+    }  
+  } catch {
+    setError('Error submitting form (printed to F12 console)');
+    console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
+    console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
+    console.log(`Voice: ${voice}`);
+    console.log(`Text: ${text}`);
+  }
 };
+
