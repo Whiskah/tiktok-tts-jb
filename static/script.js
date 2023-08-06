@@ -50,9 +50,11 @@ const setAudio = (base64, text) => {
     document.getElementById('success').style.display = 'block';
     // Check if the base64 audio is within URL length limit
     if (base64.length <= 20000) {
+		console.log("setAudio() if");
         // Use data URI for short audio files
         document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`;
     } else {
+		console.log("setAudio() else");
         // Use Blob URL for long audio files
         const blob = b64toBlob(base64, 'audio/mpeg');
         const blobUrl = URL.createObjectURL(blob);
@@ -218,7 +220,7 @@ const generateAudio = (text, voice, callback = null) => {
 				console.log("generateAudio() if ");
                 callback(resp.data);
             } else {
-				console.log("generateAudio() else ");
+				console.log("generateAudio() else text=" + text);
                 setAudio(resp.data, text);
             }
         }  
