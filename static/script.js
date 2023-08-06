@@ -213,6 +213,7 @@ const generateAudio = (text, voice, callback = null) => {
         if (resp.data === null) {
             setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
         } else {
+			console.log("generateAudio() pre if");
             if (callback) {
 				console.log("generateAudio() if ");
                 callback(resp.data);
