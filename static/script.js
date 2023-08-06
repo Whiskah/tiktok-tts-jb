@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("2");
+	console.log("3");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -37,11 +37,12 @@ const clearError = () => {
     document.getElementById('errortext').innerHTML = 'There was an error.'
 }
 
-const setAudio = (base64, text) => {
-    document.getElementById('success').style.display = 'block'
-    document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`
-    document.getElementById('generatedtext').innerHTML = `"${text}"`
-}
+const setAudio = async (base64, text) => {
+  document.getElementById('success').style.display = 'block';
+  const audioUrl = await mergeAudioChunks([base64]); // Pass the base64 audio as an array of one element
+  document.getElementById('audio').src = audioUrl;
+  document.getElementById('generatedtext').innerHTML = `"${text}"`;
+};
 
 const clearAudio = () => {
     document.getElementById('success').style.display = 'none'
@@ -167,18 +168,41 @@ const splitTextIntoChunks = (text, chunkSize) => {
   return chunks;
 };
 
-const mergeAudioChunks = (audioResponses) => {
-  // Assuming the audioResponses array contains base64-encoded audio chunks
-  // You'll need to join the audio chunks together to create the complete audio file.
-  // The specifics of joining will depend on the format of the audio data.
-  // For example, if they are MP3 files, you can concatenate the base64 strings,
-  // decode them, and then create a new base64 string for the complete audio.
-  // Ensure that the order of the audio chunks is maintained to get the correct result.
-  // Please note that I'm assuming the API responses provide base64 audio chunks.
+const mergeAudioChunks = async (audioResponses) => {
+  try {
+    const audioBuffers = await Promise.all(audioResponses.map(base64ToArrayBuffer));
+    const concatenatedBuffer = concatAudioBuffers(audioBuffers);
+    const blob = new Blob([concatenatedBuffer], { type: 'audio/mpeg' });
+    const audioUrl = URL.createObjectURL(blob);
+    return audioUrl;
+  } catch (error) {
+    throw error;
+  }
+};
 
-  // Example implementation (if audioResponses contains raw base64 audio data):
-  const mergedAudioData = audioResponses.join('');
-  const mergedAudio = `data:audio/mpeg;base64,${mergedAudioData}`;
+const base64ToArrayBuffer = (base64) => {
+  return new Promise((resolve, reject) => {
+    const binaryString = window.atob(base64);
+    const length = binaryString.length;
+    const bytes = new Uint8Array(length);
 
-  return mergedAudio;
+    for (let i = 0; i < length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    resolve(bytes.buffer);
+  });
+};
+
+const concatAudioBuffers = (buffers) => {
+  const totalLength = buffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+
+  buffers.forEach((buffer) => {
+    result.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  });
+
+  return result;
 };
