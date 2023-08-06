@@ -197,7 +197,8 @@ const processLongText = (text, voice) => {
 };
 
 const generateAudio = (text, voice, callback = null) => {
-    try {
+    console.log("generateAudio() begin try");
+	try {
         const req = new XMLHttpRequest();
 		console.log("running generateAudio()");
         req.open('POST', `${ENDPOINT}/api/generation`, false);
