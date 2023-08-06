@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("4");
+	console.log("5");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -171,7 +171,7 @@ const splitTextIntoChunks = (text, chunkSize) => {
 const mergeAudioChunks = async (audioResponses) => {
   try {
     const concatenatedBase64 = audioResponses.join('');
-    const blob = base64ToBlob(concatenatedBase64, 'audio/mpeg');
+    const blob = new Blob([base64ToArrayBuffer(concatenatedBase64)], { type: 'audio/mpeg' });
     const audioUrl = URL.createObjectURL(blob);
     return audioUrl;
   } catch (error) {
@@ -181,15 +181,19 @@ const mergeAudioChunks = async (audioResponses) => {
 
 const base64ToArrayBuffer = (base64) => {
   return new Promise((resolve, reject) => {
-    const binaryString = window.atob(base64);
-    const length = binaryString.length;
-    const bytes = new Uint8Array(length);
+    try {
+      const binaryString = window.atob(base64);
+      const length = binaryString.length;
+      const bytes = new Uint8Array(length);
 
-    for (let i = 0; i < length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+      for (let i = 0; i < length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      resolve(bytes.buffer);
+    } catch (error) {
+      reject(error);
     }
-
-    resolve(bytes.buffer);
   });
 };
 
