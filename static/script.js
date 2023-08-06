@@ -169,10 +169,9 @@ const submitForm = async () => {
     } else {
 		generateAudio(text, voice);
     }
-  };
 };
 
-  const processLongText = async (text, voice) => {
+const processLongText = async (text, voice) => {
     const chunks = [];
     let currentIndex = 0;
 
@@ -199,7 +198,7 @@ const submitForm = async () => {
     const mergedAudio = audioData.join('');
     setAudio(mergedAudio, text);
     enableControls();
-  };
+};
 
 const generateAudio = (text, voice) => {
     return new Promise((resolve, reject) => {
