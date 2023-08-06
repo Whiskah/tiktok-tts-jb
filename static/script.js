@@ -41,13 +41,15 @@ const clearError = () => {
 
 const setAudio = (base64, text) => {
     // Check if the base64 audio is too long for data URI
-	console.log("base64 length:" + base64.length);
+	console.log("setAudio() base64 length:" + base64.length);
     if (base64.length > CHUNK_BYTE_LIMIT) {
+				console.log("setAudio() if length");
         setError("Audio is too long. Please try a shorter text.");
         return;
     }
-
+		console.log("setAudio() pre if 0");
     document.getElementById('success').style.display = 'block';
+		console.log("setAudio() pre if 1");
     // Check if the base64 audio is within URL length limit
     if (base64.length <= 20000) {
 		console.log("setAudio() if");
