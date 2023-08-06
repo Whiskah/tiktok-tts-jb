@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer data-domain="weilbyte.github.io/tiktok-tts" src="https://plausible.io/js/plausible.js"></script>
     <script src="static/script.js"></script>
-    <title>TikTok TTS JB</title>
+    <title>TikTok TTS JEB</title>
     <style>
         #funny:hover {
             opacity: 0;
@@ -19,9 +19,6 @@
         .bold {
             font-weight:bold;
         }
-    </style>
-	<style>
-        /* ... (rest of the existing styles) ... */
 
         .loading-overlay {
             position: fixed;
@@ -59,14 +56,6 @@
         </h1>
         <p class="text-center pt-6">Generate the <span id="funny">funny</span> TikTok lady voice <sup>(& more)</sup> in your browser</p>
     </div>
-	<div id="loading" class="bg-black bg-opacity-50 fixed inset-0 flex justify-center items-center" style="display: none">
-        <div class="bg-white p-8 rounded-lg">
-            <div class="flex items-center justify-center mb-4">
-                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-            <p class="text-center">Generating audio...</p>
-        </div>
-    </div>
     <div class="bg-slate-200 md:mt-11 p-11 md:mx-auto h-2/4 md:w-3/5 md:rounded">
         <form onsubmit="event.preventDefault(); submitForm()">
             <label for="text" hidden>Text to generate into speech</label>
@@ -77,6 +66,15 @@
                 <option selected disabled hidden value="none">Select a voice</option>
 
                 <option disabled class="bold">English US</option>
+                <option value="en_us_001">Female</option>
+                <option value="en_us_006">Male 1</option>
+                <option value="en_us_007">Male 2</option>
+                <option value="en_us_009">Male 3</option>
+                <option value="en_us_010">Male 4</option>
+                <option disabled></option>
+
+                <!-- ... (rest of the voice options) ... -->
+         <option disabled class="bold">English US</option>
                 <option value="en_us_001">Female 1</option>
 				<option value="en_us_002">Female 2</option>
 				<option value="en_female_emotional">Female Emotional</option>
@@ -182,8 +180,10 @@
             Umm, update your browser.
         </audio>
     </div>
-	    <div class="loading-overlay hidden">
+
+    <div class="loading-overlay hidden">
         <div class="loading-spinner"></div>
     </div>
 </body>
 </html>
+

@@ -1,6 +1,6 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev'
 
-const TEXT_BYTE_LIMIT = 287
+const TEXT_BYTE_LIMIT = 300
 const textEncoder = new TextEncoder()
 const CHUNK_BYTE_LIMIT = 32232; // Maximum size per API request chunk
 
@@ -36,7 +36,6 @@ const clearError = () => {
     document.getElementById('error').style.display = 'none'
     document.getElementById('errortext').innerHTML = 'There was an error.'
 }
-
 
 const setAudio = (base64, text) => {
     // Check if the base64 audio is too long for data URI
@@ -129,14 +128,6 @@ const splitTextIntoChunks = (text) => {
     return chunks;
 };
 
-const showLoadingOverlay = () => {
-    document.querySelector('.loading-overlay').classList.remove('hidden');
-}
-
-const hideLoadingOverlay = () => {
-    document.querySelector('.loading-overlay').classList.add('hidden');
-}
-
 const submitForm = async () => {
     clearError()
     clearAudio()
@@ -206,32 +197,8 @@ const submitForm = async () => {
         console.log(`Text: ${text}`);
     }
 
-	try {
-        showLoadingOverlay(); // Show the loading overlay before making the request
-
-        const req = new XMLHttpRequest()
-        req.open('POST', `${ENDPOINT}/api/generation`, false)
-        req.setRequestHeader('Content-Type', 'application/json')
-        req.send(JSON.stringify({
-            text: text,
-            voice: voice
-        }))
-
-        let resp = JSON.parse(req.responseText)
-        if (resp.data === null) {
-            setError(`<b>Generation failed</b><br/> ("${resp.error}")`)
-        } else {
-            setAudio(resp.data, text)
-        }  
-    } catch {
-        setError('Error submitting form (printed to F12 console)')
-        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)')
-        console.log('If the error code is 503, the service is currently unavailable. Please try again later.')
-        console.log(`Voice: ${voice}`)
-        console.log(`Text: ${text}`)
-    } finally {
-        hideLoadingOverlay(); // Hide the loading overlay after the request is complete (success or error)
-    }
+    // Hide the loading popup after the audio response is received
+    hideLoadingPopup();
 
     enableControls();
 };
