@@ -11,13 +11,43 @@
     <style>
         #funny:hover {
             opacity: 0;
-            transition: opacity 1s ease-out 100ms;
+            transition: opacity 1s ease-out 100ms
         }
         #funny {
-            transition: opacity 1s ease-in 100ms;
+            transition: opacity 1s ease-in 100ms
         }
         .bold {
             font-weight:bold;
+        }
+    </style>
+	<style>
+        /* ... (rest of the existing styles) ... */
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -28,6 +58,14 @@
             TikTok TTS
         </h1>
         <p class="text-center pt-6">Generate the <span id="funny">funny</span> TikTok lady voice <sup>(& more)</sup> in your browser</p>
+    </div>
+	<div id="loading" class="bg-black bg-opacity-50 fixed inset-0 flex justify-center items-center" style="display: none">
+        <div class="bg-white p-8 rounded-lg">
+            <div class="flex items-center justify-center mb-4">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+            </div>
+            <p class="text-center">Generating audio...</p>
+        </div>
     </div>
     <div class="bg-slate-200 md:mt-11 p-11 md:mx-auto h-2/4 md:w-3/5 md:rounded">
         <form onsubmit="event.preventDefault(); submitForm()">
@@ -40,15 +78,15 @@
 
                 <option disabled class="bold">English US</option>
                 <option value="en_us_001">Female 1</option>
-                <option value="en_us_002">Female 2</option>
-                <option value="en_female_emotional">Female Emotional</option>
+				<option value="en_us_002">Female 2</option>
+				<option value="en_female_emotional">Female Emotional</option>
                 <option value="en_us_006">Male 1</option>
                 <option value="en_us_007">Male 2</option>
                 <option value="en_us_009">Male 3</option>
                 <option value="en_us_010">Male 4</option>
-                <option value="en_male_narration">Male Narrator</option>
-                <option value="en_male_funny">Male Funny</option>
-                
+				<option value="en_male_narration">Male Narrator</option>
+				<option value="en_male_funny">Male Funny</option>
+				
                 <option disabled></option>
 
                 <option disabled class="bold">English UK</option>
@@ -144,13 +182,8 @@
             Umm, update your browser.
         </audio>
     </div>
-    <div id="loading" class="bg-black bg-opacity-50 fixed inset-0 flex justify-center items-center" style="display: none">
-        <div class="bg-white p-8 rounded-lg">
-            <div class="flex items-center justify-center mb-4">
-                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-            <p class="text-center">Generating audio...</p>
-        </div>
+	    <div class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
     </div>
 </body>
 </html>
