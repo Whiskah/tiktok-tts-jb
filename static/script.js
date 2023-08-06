@@ -4,6 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
+	console.log("1");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
