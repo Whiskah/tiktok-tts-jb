@@ -8,7 +8,7 @@ const textEncoder = new TextEncoder()
 let countdownInterval; // Global variable to hold the interval ID for the countdown timer
 
 window.onload = () => {
-	console.log("3");
+	console.log("4");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -162,8 +162,12 @@ const generateAudio = (text, voice, callback = null) => {
     const req = new XMLHttpRequest();
     req.open('POST', `${ENDPOINT}/api/generation`, false);
     req.setRequestHeader('Content-Type', 'application/json');
+
+    // Encode the text to ensure special characters are handled correctly
+    const encodedText = encodeURIComponent(text);
+
     req.send(JSON.stringify({
-      text: text,
+      text: encodedText,
       voice: voice
     }));
 
@@ -186,4 +190,5 @@ const generateAudio = (text, voice, callback = null) => {
     console.log(`Text: ${text}`);
   }
 };
+
 
