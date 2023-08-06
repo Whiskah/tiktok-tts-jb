@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("6");
+	console.log("7");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -153,7 +153,7 @@ const generateAudioChunks = async (text, voice) => {
       if (responseData.data === null) {
         throw new Error(`Generation failed for chunk: "${chunk}"`);
       } else {
-        audioResponses.push(responseData.data); // No need to decode here, push base64 data as it is
+        audioResponses.push(responseData.data.audio); // Update to access the audio property from the response
       }
     } catch (error) {
       throw error;
@@ -162,6 +162,7 @@ const generateAudioChunks = async (text, voice) => {
 
   return audioResponses;
 };
+
 
 const mergeAudioChunks = async (audioResponses) => {
   try {
