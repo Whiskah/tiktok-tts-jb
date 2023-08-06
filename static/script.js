@@ -1,12 +1,13 @@
 const ENDPOINT = 'https://tiktok-tts.weilnet.workers.dev';
 
-const TEXT_BYTE_LIMIT = 287;
-const CHUNK_BYTE_LIMIT = 32232; // Maximum size per API request chunk
+const TEXT_CHAR_LIMIT = 287;
+const CHUNK_CHAR_LIMIT = 32232;
 
 const textEncoder = new TextEncoder();
 
 window.onload = () => {
-    document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`;
+    document.getElementById('charcount').textContent = `0/${TEXT_CHAR_LIMIT}`;
+
     const req = new XMLHttpRequest();
     req.open('GET', `${ENDPOINT}/api/status`, false);
     req.send();
@@ -79,11 +80,11 @@ const enableControls = () => {
 
 const onTextareaInput = () => {
     const text = document.getElementById('text').value;
-    const textEncoded = textEncoder.encode(text);
+    const textLength = textEncoder.encode(text).length;
 
-    document.getElementById('charcount').textContent = `${textEncoded.length <= 999 ? textEncoded.length : 999}/${TEXT_BYTE_LIMIT}`;
+    document.getElementById('charcount').textContent = `${textLength <= 999 ? textLength : 999}/${TEXT_CHAR_LIMIT}`;
 
-    if (textEncoded.length > TEXT_BYTE_LIMIT) {
+    if (textLength > TEXT_CHAR_LIMIT) {
         document.getElementById('charcount').style.color = 'red';
     } else {
         document.getElementById('charcount').style.color = 'black';
