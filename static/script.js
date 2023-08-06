@@ -113,7 +113,7 @@ const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
     return blob;
 };
 
-const submitForm = () => {
+const submitForm = async () => {
     clearError();
     clearAudio();
 
@@ -164,73 +164,68 @@ const submitForm = () => {
         return;
     }
 
-    if (textLength > TEXT_CHAR_LIMIT) {
-        processLongText(text, voice);
+	if (textLength > TEXT_CHAR_LIMIT) {
+        await processLongText(text, voice); // Use await here for async handling
     } else {
-        generateAudio(text, voice);
+		generateAudio(text, voice);
     }
+  };
 };
 
-const processLongText = (text, voice) => {
+  const processLongText = async (text, voice) => {
     const chunks = [];
     let currentIndex = 0;
 
     while (currentIndex < text.length) {
-        const chunk = text.slice(currentIndex, currentIndex + CHUNK_CHAR_LIMIT);
-        chunks.push(chunk);
-        currentIndex += CHUNK_CHAR_LIMIT;
+      const chunk = text.slice(currentIndex, currentIndex + CHUNK_CHAR_LIMIT);
+      chunks.push(chunk);
+      currentIndex += CHUNK_CHAR_LIMIT;
     }
 
     const audioData = [];
 
-    const processNextChunk = (index) => {
-        if (index >= chunks.length) {
-            const mergedAudio = audioData.join('');
-            setAudio(mergedAudio, text);
-            enableControls();
-            return;
-        }
-
-        generateAudio(chunks[index], voice, (base64Audio) => {
-            audioData.push(base64Audio);
-            processNextChunk(index + 1);
-        });
-    };
-
-    processNextChunk(0);
-};
-
-const generateAudio = (text, voice, callback = null) => {
-    console.log("generateAudio() begin try");
-	try {
-        const req = new XMLHttpRequest();
-		console.log("running generateAudio()");
-        req.open('POST', `${ENDPOINT}/api/generation`, false);
-        req.setRequestHeader('Content-Type', 'application/json');
-        req.send(JSON.stringify({
-            text: text,
-            voice: voice
-        }));
-
-        let resp = JSON.parse(req.responseText);
-		console.log("generateAudio() resp:" + resp.data);
-        if (resp.data === null) {
-            setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
-        } else {
-			console.log("generateAudio() pre if");
-            if (callback) {
-				console.log("generateAudio() if ");
-                callback(resp.data);
-            } else {
-				console.log("generateAudio() else text=" + text);
-                setAudio(resp.data, text);
-            }
-        }  
-    } catch {
-        setError('Error submitting form (printed to F12 console)');
-        console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
-        console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
-        console.log(`Voice: ${voice}`);
-        console.log(`Text: ${text}`);
+    for (const chunk of chunks) {
+      try {
+        const base64Audio = await generateAudio(chunk, voice);
+        audioData.push(base64Audio);
+      } catch (error) {
+        setError(
+          `<b>Generation failed</b><br/> ("${error.message || error}")`
+        );
+        return;
+      }
     }
+
+    const mergedAudio = audioData.join('');
+    setAudio(mergedAudio, text);
+    enableControls();
+  };
+
+const generateAudio = (text, voice) => {
+    return new Promise((resolve, reject) => {
+      const req = new XMLHttpRequest();
+      req.open('POST', `${ENDPOINT}/api/generation`, true); // Set to async: true
+      req.setRequestHeader('Content-Type', 'application/json');
+      req.onload = () => {
+        try {
+          const resp = JSON.parse(req.responseText);
+          if (resp.data === null) {
+            reject(resp.error || 'Unknown error');
+          } else {
+            resolve(resp.data);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      req.onerror = () => {
+        reject(new Error('Error submitting form (printed to F12 console)'));
+      };
+      req.send(
+        JSON.stringify({
+          text: text,
+          voice: voice,
+        })
+      );
+    });
 };
