@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("5");
+	console.log("6");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -75,6 +75,105 @@ const onTextareaInput = () => {
     }
 }
 
+const splitTextIntoChunks = (text, chunkSize) => {
+  const chunks = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize));
+  }
+  return chunks;
+};
+const base64ToArrayBuffer = (base64) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const binaryString = window.atob(base64);
+      const length = binaryString.length;
+      const bytes = new Uint8Array(length);
+
+      for (let i = 0; i < length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      resolve(bytes.buffer);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+const base64ToBlob = (base64) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const binaryString = window.atob(base64);
+      const length = binaryString.length;
+      const bytes = new Uint8Array(length);
+
+      for (let i = 0; i < length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      resolve(new Blob([bytes], { type: 'audio/mpeg' }));
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+const concatAudioBuffers = (buffers) => {
+  const totalLength = buffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+
+  buffers.forEach((buffer) => {
+    result.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  });
+
+  return result;
+};
+
+
+const generateAudioChunks = async (text, voice) => {
+  const chunks = splitTextIntoChunks(text, TEXT_BYTE_LIMIT);
+  const audioResponses = [];
+
+  for (const chunk of chunks) {
+    try {
+      const response = await fetch(`${ENDPOINT}/api/generation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: chunk,
+          voice: voice,
+        }),
+      });
+
+      const responseData = await response.json();
+      if (responseData.data === null) {
+        throw new Error(`Generation failed for chunk: "${chunk}"`);
+      } else {
+        audioResponses.push(responseData.data); // No need to decode here, push base64 data as it is
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  return audioResponses;
+};
+
+const mergeAudioChunks = async (audioResponses) => {
+  try {
+    const audioChunks = await Promise.all(audioResponses.map(base64ToBlob));
+    const concatenatedBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+    const audioUrl = URL.createObjectURL(concatenatedBlob);
+    return audioUrl;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const submitForm = async () => {
   clearError();
   clearAudio();
@@ -127,97 +226,4 @@ const submitForm = async () => {
   }
 
   enableControls();
-};
-
-const generateAudioChunks = async (text, voice) => {
-  const chunks = splitTextIntoChunks(text, TEXT_BYTE_LIMIT);
-  const audioResponses = [];
-
-  for (const chunk of chunks) {
-    try {
-      const response = await fetch(`${ENDPOINT}/api/generation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: chunk,
-          voice: voice,
-        }),
-      });
-
-      const responseData = await response.json();
-      if (responseData.data === null) {
-        throw new Error(`Generation failed for chunk: "${chunk}"`);
-      } else {
-        audioResponses.push(responseData.data); // No need to decode here, push base64 data as it is
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  return audioResponses;
-};
-
-const splitTextIntoChunks = (text, chunkSize) => {
-  const chunks = [];
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.slice(i, i + chunkSize));
-  }
-  return chunks;
-};
-
-const mergeAudioChunks = async (audioResponses) => {
-  try {
-    const concatenatedBase64 = audioResponses.join('');
-    const blob = new Blob([base64ToArrayBuffer(concatenatedBase64)], { type: 'audio/mpeg' });
-    const audioUrl = URL.createObjectURL(blob);
-    return audioUrl;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const base64ToArrayBuffer = (base64) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const binaryString = window.atob(base64);
-      const length = binaryString.length;
-      const bytes = new Uint8Array(length);
-
-      for (let i = 0; i < length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      resolve(bytes.buffer);
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-const base64ToBlob = (base64, type) => {
-  const binaryString = window.atob(base64);
-  const length = binaryString.length;
-  const bytes = new Uint8Array(length);
-
-  for (let i = 0; i < length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  return new Blob([bytes], { type: type });
-};
-
-const concatAudioBuffers = (buffers) => {
-  const totalLength = buffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  buffers.forEach((buffer) => {
-    result.set(new Uint8Array(buffer), offset);
-    offset += buffer.byteLength;
-  });
-
-  return result;
 };
