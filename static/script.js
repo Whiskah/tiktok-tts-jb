@@ -4,7 +4,7 @@ const TEXT_BYTE_LIMIT = 287; // Update the character limit to 287
 const textEncoder = new TextEncoder()
 
 window.onload = () => {
-	console.log("7");
+	console.log("8");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -150,6 +150,8 @@ const generateAudioChunks = async (text, voice) => {
       });
 
       const responseData = await response.json();
+      console.log('API Response Data:', responseData); // Add this line for debugging
+
       if (responseData.data === null) {
         throw new Error(`Generation failed for chunk: "${chunk}"`);
       } else {
