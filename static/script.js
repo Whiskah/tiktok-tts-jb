@@ -158,7 +158,6 @@ const processLongText = (text, voice) => {
 };
 
 const generateAudio = (text, voice, callback = null) => {
-  try {
   // Remove special characters using regular expression encodeURIComponent breaks it
   const cleanedText = text.replace(/[^\w\s]/g, '');
 
