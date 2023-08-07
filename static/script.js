@@ -6,9 +6,10 @@ const CHUNK_BYTE_LIMIT = 290
 const textEncoder = new TextEncoder()
 
 let countdownInterval; // Global variable to hold the interval ID for the countdown timer
+let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("7");
+	console.log("8");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -65,13 +66,14 @@ const enableControls = () => {
     document.getElementById('submit').removeAttribute('disabled')
 }
 
-const showLoadingOverlay = () => {
-  document.getElementById('loading-overlay').style.display = 'flex';
+const showLoadingPopup = () => {
+  document.getElementById('loading-popup').style.display = 'block';
 };
 
-const hideLoadingOverlay = () => {
-  document.getElementById('loading-overlay').style.display = 'none';
+const hideLoadingPopup = () => {
+  document.getElementById('loading-popup').style.display = 'none';
 };
+
 
 const onTextareaInput = () => {
     const text = document.getElementById('text').value
@@ -89,9 +91,9 @@ const onTextareaInput = () => {
 const submitForm = () => {
   clearError();
   clearAudio();
-  showLoadingOverlay(); // Show loading overlay immediately
+  showLoadingPopup();
 
-  setTimeout(() => { // Add a delay to give time for the loading overlay to show
+  setTimeout(() => {
     let text = document.getElementById('text').value;
     const textLength = new TextEncoder().encode(text).length;
 
@@ -99,18 +101,20 @@ const submitForm = () => {
     const voice = document.getElementById('voice').value;
 
     if (voice == "none") {
-      hideLoadingOverlay(); // Hide loading overlay in case of error
+      hideLoadingPopup();
       setError("No voice has been selected");
       enableControls();
       return;
     }
 
     if (textLength > TEXT_BYTE_LIMIT) {
+      totalRequests = Math.ceil(textLength / CHUNK_BYTE_LIMIT); // Calculate total requests
       processLongText(text, voice);
     } else {
+      totalRequests = 1;
       generateAudio(text, voice);
     }
-  }, 100); // Adjust the delay as needed
+  }, 100);
 };
 
 const processLongText = (text, voice) => {
@@ -132,6 +136,9 @@ const processLongText = (text, voice) => {
             enableControls();
             return;
         }
+		  // Update loading message
+		const loadingMessage = `Loading ${index + 1} / ${totalRequests}`;
+		document.getElementById('loading-text').textContent = loadingMessage;
 
         generateAudio(chunks[index], voice, (base64Audio) => {
             audioData.push(base64Audio);
