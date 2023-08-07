@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("12 alt");
+	console.log("13");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -88,33 +88,47 @@ const onTextareaInput = () => {
     }
 }
 
-const submitForm = async () => {
-  clearError();
-  clearAudio();
-  showLoadingPopup();
+const normalizeText = (text) => {
+    // Replace smart quotes with straight quotes
+    text = text.replace(/[\u2018\u2019]/g, "'");
+    text = text.replace(/[\u201C\u201D]/g, '"');
 
-  let text = document.getElementById('text').value;
-  const textLength = new TextEncoder().encode(text).length;
+    // Replace other special characters as needed
+    // For example, replace em dashes with double hyphens
+    text = text.replace(/\u2013/g, '--');
+    
+    // You can add more replacements as needed
 
-  if (textLength === 0) text = 'The fungus among us.';
-  const voice = document.getElementById('voice').value;
+    return text;
+};
 
-  if (voice == "none") {
+const submitForm = () => {
+    clearError();
+    clearAudio();
+
+    disableControls();
+
+    let text = document.getElementById('text').value;
+    text = normalizeText(text); // Call a function to normalize the text
+
+    const textLength = new TextEncoder().encode(text).length;
+    console.log(textLength);
+
+    if (textLength === 0) text = 'The fungus among us.'; 
+    const voice = document.getElementById('voice').value;
+
+    if (voice == "none") {
+        setError("No voice has been selected");
+        enableControls();
+        return;
+    }
+
+    if (textLength > TEXT_BYTE_LIMIT) {
+        processLongTextAsync(text, voice); // Use the async version for long text
+    } else {
+        generateAudioAsync(text, voice); // Use the async version for short text
+    }
     hideLoadingPopup();
-    setError("No voice has been selected");
-    enableControls();
-    return;
-  }
-
-  if (textLength > TEXT_BYTE_LIMIT) {
-    totalRequests = Math.ceil(textLength / CHUNK_BYTE_LIMIT); // Calculate total requests
-    await processLongTextAsync(text, voice); // Use an asynchronous version of processLongText
-  } else {
-    totalRequests = 1;
-    await generateAudioAsync(text, voice); // Use an asynchronous version of generateAudio
-  }
-
-  hideLoadingPopup();
 };
 
 const processLongTextAsync = async (text, voice) => {
