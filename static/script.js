@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("11");
+	console.log("12");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -118,30 +118,43 @@ const submitForm = async () => {
 };
 
 const processLongTextAsync = async (text, voice) => {
+    const words = text.split(/\s+/); // Split text into words using space as delimiter
     const chunks = [];
-    let currentIndex = 0;
+    let currentChunk = '';
 
-    while (currentIndex < text.length) {
-        const chunk = text.slice(currentIndex, currentIndex + CHUNK_BYTE_LIMIT);
-        chunks.push(chunk);
-        currentIndex += CHUNK_BYTE_LIMIT;
+    for (const word of words) {
+        if (currentChunk.length + word.length + 1 <= CHUNK_BYTE_LIMIT) { // +1 for space
+            if (currentChunk) {
+                currentChunk += ' ' + word; // Add space before adding the word
+            } else {
+                currentChunk = word;
+            }
+        } else {
+            chunks.push(currentChunk);
+            currentChunk = word;
+        }
+    }
+
+    if (currentChunk) {
+        chunks.push(currentChunk);
     }
 
     const audioData = [];
 
-	  const processNextChunk = async (index) => {
-		if (index >= chunks.length) {
-		  const mergedAudio = audioData.join('');
-		  await setAudioAsync(mergedAudio, text); // Use an asynchronous version of setAudio
-		  enableControls();
-		  return;
-		}
+    const processNextChunk = async (index) => {
+        if (index >= chunks.length) {
+            const mergedAudio = audioData.join('');
+            setAudio(mergedAudio, text);
+            enableControls();
+            return;
+        }
 
-		await generateAudioAsync(chunks[index], voice, async (base64Audio) => {
-		  audioData.push(base64Audio);
-		  await processNextChunk(index + 1);
-		});
-	  };
+        await generateAudioAsync(chunks[index], voice, (base64Audio) => {
+            audioData.push(base64Audio);
+        });
+
+        processNextChunk(index + 1);
+    };
 
     await processNextChunk(0);
 };
