@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("9");
+	console.log("10");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -42,11 +42,11 @@ const clearError = () => {
     document.getElementById('errortext').innerHTML = 'There was an error.'
 }
 
-const setAudio = (base64, text) => {
+const setAudioAsync = async (base64, text) => {
     document.getElementById('success').style.display = 'block'
     document.getElementById('audio').src = `data:audio/mpeg;base64,${base64}`
     document.getElementById('generatedtext').innerHTML = `"${text}"`
-}
+};
 
 const clearAudio = () => {
     document.getElementById('success').style.display = 'none'
@@ -74,6 +74,8 @@ const hideLoadingPopup = () => {
   document.getElementById('loading-popup').style.display = 'none';
 };
 
+// Call submitForm to start the process
+document.getElementById('submit').addEventListener('click', submitForm);
 
 const onTextareaInput = () => {
     const text = document.getElementById('text').value
@@ -88,36 +90,36 @@ const onTextareaInput = () => {
     }
 }
 
-const submitForm = () => {
+const submitForm = async () => {
   clearError();
   clearAudio();
   showLoadingPopup();
 
-  setTimeout(() => {
-    let text = document.getElementById('text').value;
-    const textLength = new TextEncoder().encode(text).length;
+  let text = document.getElementById('text').value;
+  const textLength = new TextEncoder().encode(text).length;
 
-    if (textLength === 0) text = 'The fungus among us.';
-    const voice = document.getElementById('voice').value;
+  if (textLength === 0) text = 'The fungus among us.';
+  const voice = document.getElementById('voice').value;
 
-    if (voice == "none") {
-      hideLoadingPopup();
-      setError("No voice has been selected");
-      enableControls();
-      return;
-    }
+  if (voice == "none") {
+    hideLoadingPopup();
+    setError("No voice has been selected");
+    enableControls();
+    return;
+  }
 
-    if (textLength > TEXT_BYTE_LIMIT) {
-      totalRequests = Math.ceil(textLength / CHUNK_BYTE_LIMIT); // Calculate total requests
-      processLongText(text, voice);
-    } else {
-      totalRequests = 1;
-      generateAudio(text, voice);
-    }
-  }, 100);
+  if (textLength > TEXT_BYTE_LIMIT) {
+    totalRequests = Math.ceil(textLength / CHUNK_BYTE_LIMIT); // Calculate total requests
+    await processLongTextAsync(text, voice); // Use an asynchronous version of processLongText
+  } else {
+    totalRequests = 1;
+    await generateAudioAsync(text, voice); // Use an asynchronous version of generateAudio
+  }
+
+  hideLoadingPopup();
 };
 
-const processLongText = (text, voice) => {
+const processLongTextAsync = async (text, voice) => {
     const chunks = [];
     let currentIndex = 0;
 
@@ -129,60 +131,46 @@ const processLongText = (text, voice) => {
 
     const audioData = [];
 
-    const processNextChunk = (index) => {
-        if (index >= chunks.length) {
-            const mergedAudio = audioData.join('');
-            setAudio(mergedAudio, text);
-            enableControls();
-            return;
-        }
-		  // Update loading message
-		const loadingMessage = `Loading ${index + 1} / ${totalRequests}`;
-		document.getElementById('loading-text').textContent = loadingMessage;
+	  const processNextChunk = async (index) => {
+		if (index >= chunks.length) {
+		  const mergedAudio = audioData.join('');
+		  await setAudioAsync(mergedAudio, text); // Use an asynchronous version of setAudio
+		  enableControls();
+		  return;
+		}
 
-        generateAudio(chunks[index], voice, (base64Audio) => {
-            audioData.push(base64Audio);
-            processNextChunk(index + 1);
-        });
-    };
+		await generateAudioAsync(chunks[index], voice, async (base64Audio) => {
+		  audioData.push(base64Audio);
+		  await processNextChunk(index + 1);
+		});
+	  };
 
-    processNextChunk(0);
+    await processNextChunk(0);
 };
 
-const generateAudio = (text, voice, callback = null) => {
-  // Remove special characters using regular expression encodeURIComponent breaks it
-  const cleanedText = text.replace(/[^\w\s]/g, '');
-
+const generateAudioAsync = async (text, voice, callback = null) => {
   try {
     const req = new XMLHttpRequest();
     req.open('POST', `${ENDPOINT}/api/generation`, false);
     req.setRequestHeader('Content-Type', 'application/json');
     req.send(JSON.stringify({
-      text: cleanedText, // Use the cleaned text
+      text: text,
       voice: voice
     }));
 
-    const respText = req.responseText;
-    const respData = JSON.parse(respText);
-    if (respData.data === null) {
-      setError(`<b>Generation failed</b><br/> ("${respData.error}")`);
+    let resp = JSON.parse(req.responseText);
+    if (resp.data === null) {
+      setError(`<b>Generation failed</b><br/> ("${resp.error}")`);
     } else {
       if (callback) {
-        callback(respData.data);
+        await callback(resp.data);
       } else {
-        setAudio(respData.data, text);
+        await setAudioAsync(resp.data, text); // Use an asynchronous version of setAudio
       }
     }
-	
-	hideLoadingPopup(); // Hide loading popup	
-
   } catch {
-	hideLoadingPopup(); // Hide loading popup in case of error
     setError('Error submitting form (printed to F12 console)');
-    console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
-    console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
-    console.log(`Voice: ${voice}`);
-    console.log(`Text: ${text}`);
+    // ...
   }
 };
 
