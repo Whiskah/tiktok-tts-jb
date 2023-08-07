@@ -159,11 +159,14 @@ const processLongText = (text, voice) => {
 
 const generateAudio = (text, voice, callback = null) => {
   try {
+    const encodedText = encodeURIComponent(text); // Encode the text
+	console.log("text:" text);
+	console.log("encodedText:" encodedText);
     const req = new XMLHttpRequest();
     req.open('POST', `${ENDPOINT}/api/generation`, false);
     req.setRequestHeader('Content-Type', 'application/json');
     req.send(JSON.stringify({
-      text: encodeURIComponent(text),
+      text: encodedText, // Use the encoded text
       voice: voice
     }));
 
