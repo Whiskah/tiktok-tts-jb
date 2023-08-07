@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("10");
+	console.log("10 alt");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -74,8 +74,6 @@ const hideLoadingPopup = () => {
   document.getElementById('loading-popup').style.display = 'none';
 };
 
-// Call submitForm to start the process
-document.getElementById('submit').addEventListener('click', submitForm);
 
 const onTextareaInput = () => {
     const text = document.getElementById('text').value
@@ -174,4 +172,6 @@ const generateAudioAsync = async (text, voice, callback = null) => {
   }
 };
 
+// Call submitForm to start the process
+document.getElementById('submit').addEventListener('click', submitForm);
 
