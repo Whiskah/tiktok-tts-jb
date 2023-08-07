@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("12");
+	console.log("12 alt");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -144,7 +144,7 @@ const processLongTextAsync = async (text, voice) => {
     const processNextChunk = async (index) => {
         if (index >= chunks.length) {
             const mergedAudio = audioData.join('');
-            setAudio(mergedAudio, text);
+            setAudioAsync(mergedAudio, text);
             enableControls();
             return;
         }
