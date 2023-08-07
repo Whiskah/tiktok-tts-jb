@@ -9,7 +9,7 @@ let countdownInterval; // Global variable to hold the interval ID for the countd
 let totalRequests; // Loading popups number of requests
 
 window.onload = () => {
-	console.log("8");
+	console.log("9");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -174,10 +174,10 @@ const generateAudio = (text, voice, callback = null) => {
       }
     }
 	
-	hideLoadingOverlay(); // Hide loading overlay	
+	hideLoadingPopup(); // Hide loading popup	
 
   } catch {
-	hideLoadingOverlay(); // Hide loading overlay in case of error
+	hideLoadingPopup(); // Hide loading popup in case of error
     setError('Error submitting form (printed to F12 console)');
     console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
     console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
