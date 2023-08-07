@@ -65,24 +65,12 @@ const enableControls = () => {
     document.getElementById('submit').removeAttribute('disabled')
 }
 
-const showLoadingScreen = () => {
-  document.getElementById('loading-screen').style.display = 'flex';
-  let countdown = 5; // Set the countdown time in seconds
-  document.getElementById('countdown-timer').textContent = ` (${countdown})`;
-
-  // Update the countdown timer every second
-  countdownInterval = setInterval(() => {
-    countdown--;
-    if (countdown >= 0) {
-      document.getElementById('countdown-timer').textContent = ` (${countdown})`;
-    }
-  }, 1000);
+const showLoadingOverlay = () => {
+  document.getElementById('loading-overlay').style.display = 'flex';
 };
 
-// Function to hide the loading screen
-const hideLoadingScreen = () => {
-  clearInterval(countdownInterval); // Clear the countdown interval
-  document.getElementById('loading-screen').style.display = 'none';
+const hideLoadingOverlay = () => {
+  document.getElementById('loading-overlay').style.display = 'none';
 };
 
 const onTextareaInput = () => {
@@ -99,33 +87,27 @@ const onTextareaInput = () => {
 }
 
 const submitForm = () => {
-    clearError();
-    clearAudio();
-    
-    disableControls();
-    
-    // Show the loading screen while waiting for API requests
-    showLoadingScreen();
-    
-    let text = document.getElementById('text').value;
-    const textLength = new TextEncoder().encode(text).length;
-    console.log(textLength);
-    
-    if (textLength === 0) text = 'The fungus among us.';
-    const voice = document.getElementById('voice').value;
-    
-    if (voice == 'none') {
-      setError('No voice has been selected');
-      enableControls();
-      hideLoadingScreen(); // Hide the loading screen if there's an error
-      return;
-    }
-    
-    if (textLength > TEXT_BYTE_LIMIT) {
-      processLongText(text, voice);
-    } else {
-      generateAudio(text, voice);
-    }
+  clearError();
+  clearAudio();
+  showLoadingOverlay(); // Show loading overlay
+
+  let text = document.getElementById('text').value;
+  const textLength = new TextEncoder().encode(text).length;
+
+  if (textLength === 0) text = 'The fungus among us.';
+  const voice = document.getElementById('voice').value;
+
+  if (voice == "none") {
+    setError("No voice has been selected");
+    enableControls();
+    return;
+  }
+
+  if (textLength > TEXT_BYTE_LIMIT) {
+    processLongText(text, voice);
+  } else {
+    generateAudio(text, voice);
+  }
 };
 
 const processLongText = (text, voice) => {
@@ -180,8 +162,12 @@ const generateAudio = (text, voice, callback = null) => {
       } else {
         setAudio(respData.data, text);
       }
-    }  
+    }
+	
+	hideLoadingOverlay(); // Hide loading overlay	
+
   } catch {
+	hideLoadingOverlay(); // Hide loading overlay in case of error
     setError('Error submitting form (printed to F12 console)');
     console.log('^ Please take a screenshot of this and create an issue on the GitHub repository if one does not already exist :)');
     console.log('If the error code is 503, the service is currently unavailable. Please try again later.');
