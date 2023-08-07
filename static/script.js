@@ -8,7 +8,7 @@ const textEncoder = new TextEncoder()
 let countdownInterval; // Global variable to hold the interval ID for the countdown timer
 
 window.onload = () => {
-	console.log("6");
+	console.log("7");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
@@ -89,25 +89,28 @@ const onTextareaInput = () => {
 const submitForm = () => {
   clearError();
   clearAudio();
-  showLoadingOverlay(); // Show loading overlay
+  showLoadingOverlay(); // Show loading overlay immediately
 
-  let text = document.getElementById('text').value;
-  const textLength = new TextEncoder().encode(text).length;
+  setTimeout(() => { // Add a delay to give time for the loading overlay to show
+    let text = document.getElementById('text').value;
+    const textLength = new TextEncoder().encode(text).length;
 
-  if (textLength === 0) text = 'The fungus among us.';
-  const voice = document.getElementById('voice').value;
+    if (textLength === 0) text = 'The fungus among us.';
+    const voice = document.getElementById('voice').value;
 
-  if (voice == "none") {
-    setError("No voice has been selected");
-    enableControls();
-    return;
-  }
+    if (voice == "none") {
+      hideLoadingOverlay(); // Hide loading overlay in case of error
+      setError("No voice has been selected");
+      enableControls();
+      return;
+    }
 
-  if (textLength > TEXT_BYTE_LIMIT) {
-    processLongText(text, voice);
-  } else {
-    generateAudio(text, voice);
-  }
+    if (textLength > TEXT_BYTE_LIMIT) {
+      processLongText(text, voice);
+    } else {
+      generateAudio(text, voice);
+    }
+  }, 100); // Adjust the delay as needed
 };
 
 const processLongText = (text, voice) => {
