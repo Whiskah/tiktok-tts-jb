@@ -8,7 +8,7 @@ const textEncoder = new TextEncoder()
 let countdownInterval; // Global variable to hold the interval ID for the countdown timer
 
 window.onload = () => {
-	console.log("5");
+	console.log("6");
     document.getElementById('charcount').textContent = `0/${TEXT_BYTE_LIMIT}`
     const req = new XMLHttpRequest()
     req.open('GET', `${ENDPOINT}/api/status`, false)
